@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>inclusive-shortcuts demo</title>
+
+    <style>
+        :root {
+            color-scheme: light;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        [hidden] {
+            display: none !important;
+        }
+
+        html {
+            scroll-padding-top: 5rem;
+        }
+
+        body {
+            margin: 0;
+            font-family: ui-sans-serif, system-ui, sans-serif;
+            line-height: 1.5;
+            background: #f5f1ea;
+            color: #1b1713;
+        }
+
+        main {
+            width: min(72rem, calc(100% - 2rem));
+            margin: 0 auto;
+            padding: 2rem 0 4rem;
+        }
+
+        h1,
+        h2 {
+            line-height: 1.1;
+        }
+
+        section + section {
+            margin-top: 2rem;
+        }
+
+        .panel {
+            background: #fff;
+            border: 1px solid #d8ccbe;
+            border-radius: 1rem;
+            padding: 1rem;
+        }
+
+        .stack {
+            display: grid;
+            gap: 0.75rem;
+        }
+
+        button,
+        input,
+        textarea,
+        a,
+        kbd {
+            font: inherit;
+        }
+
+        button,
+        .shortcut-link {
+            border: 1px solid #1b1713;
+            border-radius: 0.75rem;
+            background: #fff;
+            color: inherit;
+            text-decoration: none;
+            padding: 0.65rem 0.9rem;
+        }
+
+        form,
+        ul {
+            margin: 0;
+            padding: 0;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 7rem;
+            border: 1px solid #cdbfad;
+            border-radius: 0.75rem;
+            padding: 0.75rem 0.9rem;
+            resize: vertical;
+        }
+
+        [data-shortcut-selection-visible] [data-shortcut-selected] {
+            outline: 3px solid #b35c00;
+            outline-offset: 2px;
+            background: #fff4e8;
+        }
+
+        .item {
+            display: grid;
+            gap: 0.65rem;
+            padding: 0.9rem;
+            border: 1px solid #d8ccbe;
+            border-radius: 0.9rem;
+            background: #fff;
+            scroll-margin-top: 5rem;
+        }
+
+        .item__row {
+            display: flex;
+            justify-content: space-between;
+            gap: 0.75rem;
+            align-items: center;
+        }
+
+        .item__meta {
+            color: #5a5147;
+            font-size: 0.95rem;
+        }
+
+        kbd {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.15rem 0.35rem;
+            border: 1px solid #cdbfad;
+            border-radius: 0.45rem;
+            background: #f6f2ec;
+        }
+
+        kbd > span {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          min-width: 1em;
+        }
+
+        .toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            align-items: center;
+        }
+
+        .note {
+            color: #5a5147;
+            max-width: 42rem;
+        }
+
+        @media (max-width: 720px) {
+            main {
+                width: min(100% - 1rem, 42rem);
+            }
+
+            .item__row {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+        }
+    </style>
+</head>
+<body>
+<main>
+    <h1>Inclusive Shortcuts</h1>
+    <p class="note">
+        Keyboard shortcuts that resolve against real DOM targets, with scoped
+        commands, inline labels, and optional list selection.
+    </p>
+
+    <section class="panel stack">
+        <h2>Selection</h2>
+        <p class="note">
+            Use <kbd>j</kbd> and <kbd>k</kbd> to move through the list, then
+            <kbd>e</kbd> to activate the selected item's primary action.
+        </p>
+
+        <div class="toolbar">
+            <a
+                href="#"
+                class="shortcut-link"
+                data-shortcut-trigger="selection.compose"
+            >
+                Compose
+                <kbd data-shortcut-label="selection.compose"></kbd>
+            </a>
+
+            <button
+                type="button"
+                id="clear-selection"
+                data-shortcut-trigger="selection.clear"
+            >
+                Clear selection
+                <kbd data-shortcut-label="selection.clear"></kbd>
+            </button>
+        </div>
+
+        <ul class="stack" id="messages">
+            <li class="item" data-shortcut-selection-key="post_1" data-shortcut-selection-default>
+                <div class="item__row">
+                    <strong>Post 1</strong>
+                    <button
+                        type="button"
+                        data-shortcut-trigger="selection.edit"
+                        data-shortcut-selection-primary
+                    >
+                        Edit
+                        <kbd data-shortcut-label="selection.edit"></kbd>
+                    </button>
+                </div>
+                <div class="item__meta">Draft · landing page refresh</div>
+            </li>
+
+            <li class="item" data-shortcut-selection-key="post_2">
+                <div class="item__row">
+                    <strong>Post 2</strong>
+                    <button
+                        type="button"
+                        data-shortcut-trigger="selection.edit"
+                        data-shortcut-selection-primary
+                    >
+                        Edit
+                        <kbd data-shortcut-label="selection.edit"></kbd>
+                    </button>
+                </div>
+                <div class="item__meta">Scheduled · keyboard support audit</div>
+            </li>
+
+            <li class="item" data-shortcut-selection-key="post_3">
+                <div class="item__row">
+                    <strong>Post 3</strong>
+                    <button
+                        type="button"
+                        data-shortcut-trigger="selection.edit"
+                        data-shortcut-selection-primary
+                    >
+                        Edit
+                        <kbd data-shortcut-label="selection.edit"></kbd>
+                    </button>
+                </div>
+                <div class="item__meta">Published · release notes draft</div>
+            </li>
+        </ul>
+    </section>
+
+    <section class="panel stack">
+        <h2>Scoped Form Actions</h2>
+        <p class="note">
+            Focus the textarea and press <kbd data-shortcut-label="form.submit"></kbd>.
+            The shortcut only resolves inside this form scope.
+        </p>
+
+        <form class="stack" data-shortcut-scope="form">
+            <label>
+                Message
+                <textarea placeholder="Type here, then press Ctrl+Enter"></textarea>
+            </label>
+            <div class="toolbar">
+                <button type="submit" data-shortcut-trigger="form.submit">
+                    Publish
+                    <kbd data-shortcut-label="form.submit"></kbd>
+                </button>
+            </div>
+        </form>
+    </section>
+</main>
+
+<script type="module">
+    const modulePath = import.meta.env?.DEV
+        ? './src/index.ts'
+        : './dist/index.js';
+    const {
+        createAriaPlugin,
+        createLabelsPlugin,
+        createSelectionPlugin,
+        createShortcuts,
+    } = await import(modulePath);
+
+    const selection = createSelectionPlugin();
+
+    document
+        .querySelectorAll('[data-shortcut-trigger="selection.edit"]')
+        .forEach((button) => {
+            button.addEventListener('click', () => {
+                const item = button.closest('[data-shortcut-selection-key]');
+                if (item) {
+                    window.alert(`Editing ${item.querySelector('strong')?.textContent}`);
+                }
+            });
+        });
+
+    document
+        .querySelector('[data-shortcut-trigger="selection.compose"]')
+        ?.addEventListener('click', (event) => {
+            event.preventDefault();
+            window.alert('Composing a new post');
+        });
+
+    document.getElementById('clear-selection')?.addEventListener('click', () => {
+        selection.reset();
+    });
+
+    document
+        .querySelector('[data-shortcut-trigger="form.submit"]')
+        ?.addEventListener('click', (event) => {
+            event.preventDefault();
+            window.alert('Published');
+        });
+
+    const runtime = createShortcuts({
+        shortcuts: [
+            {
+                id: 'selection.next',
+                keys: ['j'],
+                handle: () => selection.next(),
+            },
+            {
+                id: 'selection.previous',
+                keys: ['k'],
+                handle: () => selection.previous(),
+            },
+            {
+                id: 'selection.edit',
+                keys: ['e'],
+                scopes: ['selection'],
+            },
+            {
+                id: 'selection.compose',
+                keys: ['c'],
+            },
+            {
+                id: 'selection.clear',
+                keys: ['Escape'],
+            },
+            {
+                id: 'form.submit',
+                keys: ['$mod+Enter'],
+                scopes: ['form'],
+            },
+        ],
+        plugins: [selection, createAriaPlugin(), createLabelsPlugin()],
+    });
+
+    runtime.connect();
+</script>
+</body>
+</html>
