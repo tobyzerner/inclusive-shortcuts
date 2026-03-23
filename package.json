@@ -1,7 +1,7 @@
 {
     "name": "inclusive-shortcuts",
     "version": "0.1.0",
-    "description": "Accessible, DOM-driven keyboard shortcuts for server-rendered web apps.",
+    "description": "Accessible, DOM-driven keyboard shortcuts for web apps.",
     "type": "module",
     "main": "./dist/index.js",
     "module": "dist/index.js",
@@ -31,8 +31,7 @@
         "dev": "vite",
         "build": "tsc --noEmit && vite build && tsc --emitDeclarationOnly",
         "lint": "eslint .",
-        "prepack": "pnpm build",
-        "prepublishOnly": "pnpm test && pnpm build",
+        "prepare": "pnpm build",
         "preview": "vite preview",
         "test": "vitest run",
         "release": "release-it"
