@@ -1,6 +1,6 @@
 {
     "name": "inclusive-shortcuts",
-    "version": "0.0.0",
+    "version": "0.1.0",
     "description": "Accessible, DOM-driven keyboard shortcuts for web apps.",
     "type": "module",
     "main": "./dist/index.js",
