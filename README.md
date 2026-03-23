@@ -16,7 +16,7 @@
 ## Installation
 
 ```sh
-npm install inclusive-shortcuts
+npm install inclusive-shortcuts --save
 ```
 
 ## Quick Start
