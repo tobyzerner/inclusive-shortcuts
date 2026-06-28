@@ -41,6 +41,26 @@ function createSelectionRuntime({
     return { root, selection, runtime };
 }
 
+function clickPointer(target: HTMLElement) {
+    target.dispatchEvent(
+        new MouseEvent('click', {
+            bubbles: true,
+            cancelable: true,
+            detail: 1,
+        })
+    );
+}
+
+function clickKeyboard(target: HTMLElement) {
+    target.dispatchEvent(
+        new MouseEvent('click', {
+            bubbles: true,
+            cancelable: true,
+            detail: 0,
+        })
+    );
+}
+
 describe('Selection Plugin', () => {
     it('is inert while disconnected', () => {
         document.body.innerHTML = `
@@ -254,7 +274,7 @@ describe('Selection Plugin', () => {
         expect(selection.navigate('two')).toBe(true);
         expect(onSelect).toHaveBeenCalledTimes(1);
 
-        (items[0].querySelector('button') as HTMLButtonElement).click();
+        clickPointer(items[0].querySelector('button') as HTMLButtonElement);
         await nextTick();
 
         expect(onSelect).toHaveBeenCalledTimes(2);
@@ -518,6 +538,182 @@ describe('Selection Plugin', () => {
             )[1]
         );
         expect(scrollSpy).toHaveBeenCalledTimes(2);
+
+        runtime.disconnect();
+    });
+
+    it('keeps storage-backed selection hidden when selection changes by click', async () => {
+        const { root, selection, runtime } = createSelectionRuntime({
+            html: `
+                <div id="app">
+                    <article data-shortcut-selection-key="one">
+                        <button type="button" data-shortcut-selection-primary>Item one</button>
+                    </article>
+                    <article data-shortcut-selection-key="two">
+                        <button type="button" data-shortcut-selection-primary>Item two</button>
+                    </article>
+                </div>
+            `,
+            storageKey: 'selection',
+        });
+        const key = `selection:${window.location.pathname}${window.location.search}`;
+
+        runtime.connect();
+
+        expect(selection.navigate('one')).toBe(true);
+        expect(root.hasAttribute('data-shortcut-selection-visible')).toBe(true);
+
+        clickPointer(root.querySelectorAll<HTMLButtonElement>('button')[1]);
+        await nextTick();
+
+        expect(selectionKey(selection)).toBe('two');
+        expect(sessionStorage.getItem(`${key}:visible`)).toBe('0');
+        expect(root.hasAttribute('data-shortcut-selection-visible')).toBe(
+            false
+        );
+
+        runtime.refresh();
+        await nextTick();
+
+        expect(selectionKey(selection)).toBe('two');
+        expect(root.hasAttribute('data-shortcut-selection-visible')).toBe(
+            false
+        );
+
+        runtime.disconnect();
+    });
+
+    it('keeps storage-backed selection visible after keyboard activation', async () => {
+        const html = `
+            <div id="app">
+                <article data-shortcut-selection-key="one">
+                    <button
+                        type="button"
+                        data-shortcut-selection-primary
+                        data-shortcut-trigger="selection.open"
+                    >
+                        Item one
+                    </button>
+                </article>
+            </div>
+        `;
+        const key = `selection:${window.location.pathname}${window.location.search}`;
+        const current = createSelectionRuntime({
+            html,
+            storageKey: 'selection',
+            shortcuts: [
+                {
+                    id: 'selection.open',
+                    keys: ['Enter'],
+                    scopes: ['selection'],
+                },
+            ],
+        });
+        const button = current.root.querySelector<HTMLButtonElement>(
+            '[data-shortcut-selection-primary]'
+        )!;
+        const clickSpy = vi.fn();
+
+        button.addEventListener('click', clickSpy);
+        current.runtime.connect();
+
+        expect(current.selection.navigate('one')).toBe(true);
+
+        pressKey(button, 'Enter');
+        await nextTick();
+
+        expect(clickSpy).toHaveBeenCalledTimes(1);
+        expect(sessionStorage.getItem(`${key}:visible`)).toBe('1');
+        expect(
+            current.root.hasAttribute('data-shortcut-selection-visible')
+        ).toBe(true);
+
+        current.runtime.disconnect();
+
+        const reconnected = createSelectionRuntime({
+            html,
+            storageKey: 'selection',
+        });
+
+        reconnected.runtime.connect();
+
+        expect(selectionKey(reconnected.selection)).toBe('one');
+        expect(
+            reconnected.root.hasAttribute('data-shortcut-selection-visible')
+        ).toBe(true);
+
+        reconnected.runtime.disconnect();
+    });
+
+    it('updates storage-backed selection after keyboard activation of another item', async () => {
+        const { root, selection, runtime } = createSelectionRuntime({
+            html: `
+                <div id="app">
+                    <article data-shortcut-selection-key="one">
+                        <button type="button" data-shortcut-selection-primary>Item one</button>
+                    </article>
+                    <article data-shortcut-selection-key="two">
+                        <button type="button" data-shortcut-selection-primary>Item two</button>
+                    </article>
+                </div>
+            `,
+            storageKey: 'selection',
+        });
+        const key = `selection:${window.location.pathname}${window.location.search}`;
+        const buttons = root.querySelectorAll<HTMLButtonElement>('button');
+
+        runtime.connect();
+
+        expect(selection.navigate('one')).toBe(true);
+        expect(root.hasAttribute('data-shortcut-selection-visible')).toBe(true);
+
+        buttons[1].focus();
+        clickKeyboard(buttons[1]);
+        await nextTick();
+
+        expect(selectionKey(selection)).toBe('two');
+        expect(sessionStorage.getItem(key)).toBe('two');
+        expect(sessionStorage.getItem(`${key}:visible`)).toBe('1');
+        expect(root.hasAttribute('data-shortcut-selection-visible')).toBe(true);
+
+        runtime.disconnect();
+    });
+
+    it('keeps storage-backed selection hidden when clicking outside items', async () => {
+        const { root, selection, runtime } = createSelectionRuntime({
+            html: `
+                <div id="app">
+                    <article data-shortcut-selection-key="one">
+                        <button type="button" data-shortcut-selection-primary>Item one</button>
+                    </article>
+                    <button type="button" id="outside">Outside</button>
+                </div>
+            `,
+            storageKey: 'selection',
+        });
+        const key = `selection:${window.location.pathname}${window.location.search}`;
+
+        runtime.connect();
+
+        expect(selection.navigate('one')).toBe(true);
+        expect(root.hasAttribute('data-shortcut-selection-visible')).toBe(true);
+
+        clickPointer(root.querySelector<HTMLButtonElement>('#outside')!);
+        await nextTick();
+
+        expect(selectionKey(selection)).toBe('one');
+        expect(sessionStorage.getItem(`${key}:visible`)).toBe('0');
+        expect(root.hasAttribute('data-shortcut-selection-visible')).toBe(
+            false
+        );
+
+        runtime.refresh();
+        await nextTick();
+
+        expect(selectionKey(selection)).toBe('one');
+        expect(root.hasAttribute('data-shortcut-selection-visible')).toBe(
+            false
+        );
 
         runtime.disconnect();
     });

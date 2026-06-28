@@ -63,7 +63,7 @@ export class SelectionPlugin implements ShortcutPlugin {
         this.selectionVisible = createSessionStateValue(
             () => this.selectionVisibilityKey(),
             (value) => value === '1',
-            () => '1',
+            (value) => (value ? '1' : '0'),
             false
         );
     }
@@ -323,6 +323,16 @@ export class SelectionPlugin implements ShortcutPlugin {
         );
     }
 
+    private hideSelectionVisibility() {
+        if (!this.selectionVisible.get()) {
+            return;
+        }
+
+        this.selectionVisible.set(false);
+        this.syncSelectionVisibility();
+        this.refreshHost();
+    }
+
     private clearSelectionState(refreshHost = true) {
         const stateChanged =
             this.selectedItemKey.get() !== undefined ||
@@ -440,10 +450,19 @@ export class SelectionPlugin implements ShortcutPlugin {
         );
 
         const selection = item ? this.resolveItem(item) : undefined;
+        const isKeyboardOrSynthetic = isKeyboardOrSyntheticClick(e);
 
         if (selection) {
             // Keep click-derived selection constrained to currently selectable items.
-            this.applySelection(selection, { announce: 'changed' });
+            this.applySelection(selection, {
+                announce: 'changed',
+                visible: isKeyboardOrSynthetic ? undefined : false,
+            });
+            return;
+        }
+
+        if (!isKeyboardOrSynthetic) {
+            this.hideSelectionVisibility();
         }
     };
 
@@ -528,6 +547,10 @@ export class SelectionPlugin implements ShortcutPlugin {
         const prefix = this.selectionStateKey();
         return prefix ? `${prefix}:visible` : undefined;
     }
+}
+
+function isKeyboardOrSyntheticClick(e: Event): boolean {
+    return e instanceof MouseEvent && e.detail === 0;
 }
 
 function scrollIntoView(item: HTMLElement) {
