@@ -209,6 +209,10 @@ class ShortcutRuntime implements Shortcuts {
     }
 
     private handleKeydown = (e: KeyboardEvent) => {
+        if (typeof e.key !== 'string' || e.key.length === 0) {
+            return;
+        }
+
         const state = this.shortcutState(
             e.target instanceof Element ? e.target : null
         );

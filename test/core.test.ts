@@ -100,6 +100,33 @@ describe('Core', () => {
         runtime.disconnect();
     });
 
+    it('ignores incomplete keydown events without changing a pending sequence', () => {
+        document.body.innerHTML = '<input>';
+
+        const input = document.querySelector('input')!;
+        const handler = vi.fn(() => true);
+        const runtime = createShortcuts({
+            shortcuts: [
+                { id: 'navigation.home', keys: ['g h'], handle: handler },
+            ],
+        });
+
+        runtime.connect();
+
+        pressKey(document.body, 'g');
+
+        expect(() =>
+            input.dispatchEvent(new Event('keydown', { bubbles: true }))
+        ).not.toThrow();
+        expect(handler).not.toHaveBeenCalled();
+
+        pressKey(document.body, 'h');
+
+        expect(handler).toHaveBeenCalledTimes(1);
+
+        runtime.disconnect();
+    });
+
     it('prefers shorter bindings over longer bindings with the same prefix', async () => {
         document.body.innerHTML = `
             <button type="button" data-shortcut-trigger="go">Go</button>
